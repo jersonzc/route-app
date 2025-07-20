@@ -1,5 +1,9 @@
 edition = "2023";
 
+option go_package = "github.com/jersonzc/route-app/route";
+
+package route;
+
 service Route {
   // Obtains the feature at a given position.
   rpc GetFeature(Point) returns (Feature) {}
