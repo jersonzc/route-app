@@ -3,6 +3,11 @@ syntax = "proto3";
 service Route {
   // Obtains the feature at a given position.
   rpc GetFeature(Point) returns (Feature) {}
+  // Obtains the Features available within the given Rectangle.  Results are
+  // streamed rather than returned at once (e.g. in a response message with a
+  // repeated field), as the rectangle may cover a large area and contain a
+  // huge number of features.
+  rpc ListFeature(Rectangle) returns (stream Feature) {}
 }
 
 // Points are represented as latitude-longitude pairs in the E7 representation
@@ -16,8 +21,13 @@ message Point {
 
 // A feature names something at a given point.
 message Feature {
-  // The name of the feature.
   string name = 1;
-  // The point where the feature is detected.
   Point location = 2;
+}
+
+// A latitude-longitude rectangle, represented as two diagonally opposite
+// points "lo" and "hi".
+message Rectangle {
+  Point lo = 1;
+  Point hi = 2;
 }
