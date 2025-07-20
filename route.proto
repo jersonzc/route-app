@@ -8,7 +8,7 @@ service Route {
   // streamed rather than returned at once (e.g. in a response message with a
   // repeated field), as the rectangle may cover a large area and contain a
   // huge number of features.
-  rpc ListFeature(Rectangle) returns (stream Feature) {}
+  rpc ListFeatures(Rectangle) returns (stream Feature) {}
 
   // Accepts a stream of Points on a route being traversed, returning a
   // RouteSummary when traversal is completed.
