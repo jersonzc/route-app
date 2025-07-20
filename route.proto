@@ -1,4 +1,4 @@
-syntax = "proto3";
+edition = "2023";
 
 service Route {
   // Obtains the feature at a given position.
