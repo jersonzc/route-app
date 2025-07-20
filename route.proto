@@ -1,6 +1,6 @@
 edition = "2023";
 
-option go_package = "github.com/jersonzc/route-app/route";
+option go_package = "github.com/jersonzc/route-app/route-app";
 
 package route;
 
