@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	pb "example.com/route"
+	pb "route-app/route"
 )
 
 type routeServer struct {
