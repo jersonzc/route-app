@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/jersonzc/route-app/route";
+option go_package = "route-app/internal/route";
 
 package route;
 
