@@ -50,12 +50,12 @@ func run(app *application) (err error) {
 	}
 
 	// Start server.
+	app.infoLog.Println("Starting server...")
+	
 	srv := grpc.NewServer()
 	route.RegisterRouteServer(srv, app)
 	srvErr := make(chan error, 1)
 	go func() {
-		app.infoLog.Println("Starting server...")
-
 		if myErr := srv.Serve(listener); myErr != nil {
 			if !errors.Is(myErr, grpc.ErrServerStopped) {
 				srvErr <- myErr
