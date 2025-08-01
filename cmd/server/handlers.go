@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"google.golang.org/protobuf/proto"
+	"math"
 	"os"
 	"route-app/internal/route"
 )
@@ -20,6 +21,13 @@ func (app *application) GetFeature(ctx context.Context, point *route.Point) (*ro
 }
 
 func (app *application) ListFeatures(rect *route.Rectangle, stream route.Route_ListFeaturesServer) error {
+	for _, feature := range app.savedFeatures {
+		if inRange(feature.Location, rect) {
+			if err := stream.Send(feature); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -47,4 +55,19 @@ func (app *application) initialize(filePath string) error {
 	}
 
 	return nil
+}
+
+func inRange(point *route.Point, rect *route.Rectangle) bool {
+	left := math.Min(float64(rect.Lo.Longitude), float64(rect.Hi.Longitude))
+	right := math.Max(float64(rect.Lo.Longitude), float64(rect.Hi.Longitude))
+	top := math.Max(float64(rect.Lo.Latitude), float64(rect.Hi.Latitude))
+	bottom := math.Min(float64(rect.Lo.Latitude), float64(rect.Hi.Latitude))
+
+	if float64(point.Longitude) >= left &&
+		float64(point.Longitude) <= right &&
+		float64(point.Latitude) >= bottom &&
+		float64(point.Latitude) <= top {
+		return true
+	}
+	return false
 }
