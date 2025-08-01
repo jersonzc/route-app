@@ -65,7 +65,29 @@ func (app *application) RecordRoute(stream route.Route_RecordRouteServer) error 
 }
 
 func (app *application) RouteChat(stream route.Route_RouteChatServer) error {
-	return nil
+	for {
+		in, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		key := serialize(in.Location)
+
+		app.mu.Lock()
+		app.routeNotes[key] = append(app.routeNotes[key], in)
+		rn := make([]*route.RouteNote, len(app.routeNotes[key]))
+		copy(rn, app.routeNotes[key])
+		app.mu.Unlock()
+
+		for _, note := range rn {
+			if err := stream.Send(note); err != nil {
+				return err
+			}
+		}
+	}
 }
 
 func (app *application) initialize(filePath string) error {
@@ -124,4 +146,8 @@ func calcDistance(p1 *route.Point, p2 *route.Point) int32 {
 
 	distance := R * c
 	return int32(distance)
+}
+
+func serialize(point *route.Point) string {
+	return fmt.Sprintf("%d %d", point.Latitude, point.Longitude)
 }

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"route-app/internal/route"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,8 @@ type application struct {
 	infoLog       *log.Logger
 	errorLog      *log.Logger
 	savedFeatures []*route.Feature
+	mu            sync.Mutex
+	routeNotes    map[string][]*route.RouteNote
 }
 
 func main() {
@@ -26,8 +29,9 @@ func main() {
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	app := &application{
-		infoLog:  infoLog,
-		errorLog: errorLog,
+		infoLog:    infoLog,
+		errorLog:   errorLog,
+		routeNotes: make(map[string][]*route.RouteNote),
 	}
 
 	if err := run(app); err != nil {
