@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"log"
+	"math/rand/v2"
 	"route-app/internal/route"
 	"time"
 )
@@ -51,6 +52,44 @@ func printFeatures(client route.RouteClient, rect *route.Rectangle) {
 	}
 }
 
+func randomPoint() *route.Point {
+	lat := (rand.Int32N(180) - 90) * 1e7
+	long := (rand.Int32N(360) - 180) * 1e7
+	return &route.Point{Latitude: lat, Longitude: long}
+}
+
+// runRecordRoute sends a sequence of points to server and expects to get a RouteSummary from server.
+func runRecordRoute(client route.RouteClient) {
+	// Create a random number of random points
+	pointCount := int(rand.Int32N(100)) + 2 // Traverse at least two points
+	var points []*route.Point
+	for i := 0; i < pointCount; i++ {
+		points = append(points, randomPoint())
+	}
+	log.Printf("Traversing %d points.", len(points))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	stream, err := client.RecordRoute(ctx)
+	if err != nil {
+		log.Fatalf("client.RecordRoute failed: %v", err)
+	}
+
+	for _, point := range points {
+		if err := stream.Send(point); err != nil {
+			log.Fatalf("client.RecordRoute: stream.Send(%v) failed: %v", point, err)
+		}
+	}
+
+	reply, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("client.RecordRoute failed: %v", err)
+	}
+
+	log.Printf("Route summary: %v", reply)
+}
+
 func main() {
 	addr := flag.String("addr", "localhost:50051", "The server address in the format of host:port")
 	flag.Parse()
@@ -76,4 +115,7 @@ func main() {
 		Lo: &route.Point{Latitude: 400000000, Longitude: -750000000},
 		Hi: &route.Point{Latitude: 420000000, Longitude: -730000000},
 	})
+
+	// Route summary
+	runRecordRoute(srv)
 }
