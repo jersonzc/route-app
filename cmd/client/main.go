@@ -90,6 +90,52 @@ func runRecordRoute(client route.RouteClient) {
 	log.Printf("Route summary: %v", reply)
 }
 
+// runRouteChat receives a sequence of route notes, while sending notes for various locations.
+func runRouteChat(client route.RouteClient) {
+	notes := []*route.RouteNote{
+		{Location: &route.Point{Latitude: 0, Longitude: 1}, Message: "First message"},
+		{Location: &route.Point{Latitude: 0, Longitude: 2}, Message: "Second message"},
+		{Location: &route.Point{Latitude: 0, Longitude: 3}, Message: "Third message"},
+		{Location: &route.Point{Latitude: 0, Longitude: 1}, Message: "Fourth message"},
+		{Location: &route.Point{Latitude: 0, Longitude: 2}, Message: "Fifth message"},
+		{Location: &route.Point{Latitude: 0, Longitude: 3}, Message: "Sixth message"},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	stream, err := client.RouteChat(ctx)
+	if err != nil {
+		log.Fatalf("client.RouteChat failed: %v", err)
+	}
+
+	waitc := make(chan struct{})
+	go func() {
+		for {
+			in, err := stream.Recv()
+			if err == io.EOF {
+				// read done.
+				close(waitc)
+				return
+			}
+			if err != nil {
+				log.Fatalf("client.RouteChat failed: %v", err)
+			}
+
+			log.Printf("Got message %s at point(%d, %d)", in.Message, in.Location.Latitude, in.Location.Longitude)
+		}
+	}()
+
+	for _, note := range notes {
+		if err := stream.Send(note); err != nil {
+			log.Fatalf("client.RouteChat: stream.Send(%v) failed: %v", note, err)
+		}
+	}
+
+	stream.CloseSend()
+	<-waitc
+}
+
 func main() {
 	addr := flag.String("addr", "localhost:50051", "The server address in the format of host:port")
 	flag.Parse()
@@ -118,4 +164,7 @@ func main() {
 
 	// Route summary
 	runRecordRoute(srv)
+
+	// Route chat
+	runRouteChat(srv)
 }
