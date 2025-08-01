@@ -16,8 +16,9 @@ import (
 
 type application struct {
 	route.UnimplementedRouteServer
-	infoLog  *log.Logger
-	errorLog *log.Logger
+	infoLog       *log.Logger
+	errorLog      *log.Logger
+	savedFeatures []*route.Feature
 }
 
 func main() {
@@ -41,6 +42,7 @@ func run(app *application) (err error) {
 
 	// Read vars.
 	port := flag.Int("port", 50051, "The server port")
+	db := flag.String("db", "data/route_db.json", "The database file")
 	flag.Parse()
 
 	// Start listener.
@@ -49,9 +51,14 @@ func run(app *application) (err error) {
 		return
 	}
 
+	// Initialize application
+	if err = app.initialize(*db); err != nil {
+		return
+	}
+
 	// Start server.
 	app.infoLog.Println("Starting server...")
-	
+
 	srv := grpc.NewServer()
 	route.RegisterRouteServer(srv, app)
 	srvErr := make(chan error, 1)
