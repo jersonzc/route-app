@@ -10,6 +10,20 @@ import (
 	"time"
 )
 
+func printFeature(client route.RouteClient, point *route.Point) {
+	log.Printf("Getting feature for point (%d, %d)", point.Latitude, point.Longitude)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	feature, err := client.GetFeature(ctx, point)
+	if err != nil {
+		log.Fatalf("client.GetFeature failed: %v", err)
+	}
+
+	log.Println(feature)
+}
+
 func main() {
 	addr := flag.String("addr", "localhost:50051", "The server address in the format of host:port")
 	flag.Parse()
@@ -23,12 +37,10 @@ func main() {
 
 	// Contact the server.
 	srv := route.NewRouteClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 
-	res, err := srv.GetFeature(ctx, &route.Point{Latitude: 1, Longitude: 1})
-	if err != nil {
-		log.Fatalf("could not get feature: %v", err)
-	}
-	log.Printf("feature name: %s", res.Name)
+	// Looking for a valid feature
+	printFeature(srv, &route.Point{Latitude: 409146138, Longitude: -746188906})
+
+	// Feature missing.
+	printFeature(srv, &route.Point{Latitude: 0, Longitude: 0})
 }
